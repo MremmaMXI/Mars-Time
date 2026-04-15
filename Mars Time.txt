@@ -296,8 +296,8 @@ footer{font-size:.68rem;color:var(--sub);text-align:center;opacity:.55;max-width
       <div class="mini-cal"><table id="cal-mars-table"></table></div>
       <div class="sel-info" id="mars-sel-info"></div>
       <details class="darian-legend">
-        <summary>📚 Referencia dariana</summary>
-        <p>📅 Meses darianos: Éxodero · Fobrero · Deimzo · Olimpril · Vallayo · Hellasio · Elísio · Argosto · Amazombre · Arcadubre · Aurorembre · Etiembre</p>
+        <summary>📚 Referencia Silin</summary>
+        <p>📅 Meses: Éxodero · Fobrero · Deimzo · Olimpril · Vallayo · Hellasio · Elísio · Argosto · Amazombre · Arcadubre · Aurorembre · Etiembre</p>
         <p>🗓 Días: Lúnares · Mártes · Hérmoles · Zeúves · Afrónes · Króbado · Helingo</p>
       </details>
     </div>
@@ -344,7 +344,9 @@ footer{font-size:.68rem;color:var(--sub);text-align:center;opacity:.55;max-width
 const MARS_SOL_RATIO  = 1.02749125;
 const MSD_EPOCH_JD    = 2405522.0028779;
 const MSD_DIVISOR     = 1.0274912517;
-const DARIAN_EPOCH_OFFSET = (2405522.0028779 - 2317746.5) / 1.0274912517;
+const DARIAN_EPOCH_JD = 2317746.5;
+const DARIAN_YEAR_APPROX = 668.5991;
+const DARIAN_EPOCH_OFFSET = (MSD_EPOCH_JD - DARIAN_EPOCH_JD) / MSD_DIVISOR;
 const SILIN_EPOCH_MS  = Date.UTC(1955, 3, 11, 0, 0, 0);
 const MARS_YEAR_SOLS  = 686.9713 / MARS_SOL_RATIO; // ≈ 668.5991
 const MAX_EARTH_YEAR  = 3000;
@@ -498,14 +500,16 @@ function darianYearLen(year){
 }
 
 function darianMonthLen(year, month){
+  // Dariano clásico: meses 6/12/18 siempre 27; mes 24 = 27 o 28 en bisiesto; resto 28.
   if(month === 24) return isDarianLeap(year) ? 28 : 27;
   if(month % 6 === 0) return 27;
   return 28;
 }
 
 function darianSolsAtYearStart(year){
-  const y = year - 1;
-  return 668 * y + Math.floor(y/2) - Math.floor(y/10) + Math.floor(y/100) + Math.floor(y/1000);
+  let sols = 0;
+  for(let y=1;y<year;y++) sols += darianYearLen(y);
+  return sols;
 }
 
 function darianSolsAtMonthStart(year, month){
@@ -516,7 +520,7 @@ function darianSolsAtMonthStart(year, month){
 
 function darianFromMSD(msd){
   const totalSols = Math.max(0, Math.floor(msd + DARIAN_EPOCH_OFFSET));
-  let year = Math.max(1, Math.floor(totalSols / 668.5991) + 1);
+  let year = Math.max(1, Math.floor(totalSols / DARIAN_YEAR_APPROX) + 1);
   while(year > 1 && darianSolsAtYearStart(year) > totalSols) year--;
   while(darianSolsAtYearStart(year + 1) <= totalSols) year++;
 
