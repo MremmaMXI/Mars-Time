@@ -44,7 +44,7 @@ header p{color:var(--sub);font-size:.78rem;margin-top:.3rem}
 .panel{
   background:var(--panel);border:1px solid var(--border);border-radius:var(--r);
   padding:1.6rem 1.4rem 1.8rem;display:flex;flex-direction:column;align-items:center;gap:.9rem;
-  position:relative;overflow:hidden;transition:border-color .3s
+  position:relative;overflow:visible;transition:border-color .3s
 }
 .panel::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;
   border-radius:50%;filter:blur(80px);opacity:.4;pointer-events:none}
@@ -78,6 +78,9 @@ canvas.clock-face{display:block}
 }
 .earth .clock-digital{color:#7bb8ff}
 .mars .clock-digital{color:#ffaa70}
+.mars-sec-ref{
+  margin-top:.25rem;font-size:.65rem;color:var(--sub);text-align:center;letter-spacing:.02em
+}
 
 /* ── Date block ── */
 .date-block{text-align:center;width:100%}
@@ -89,9 +92,14 @@ canvas.clock-face{display:block}
 
 /* ── Nav controls ── */
 .cal-nav{display:flex;align-items:center;justify-content:space-between;width:100%;gap:.3rem}
-.cal-nav-center{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0}
+.cal-nav-center{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;position:relative}
 .cal-nav-title{font-size:.82rem;font-weight:700;letter-spacing:.05em;text-align:center;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+.cal-nav-title-btn{
+  appearance:none;background:transparent;border:none;color:inherit;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:.28rem;width:100%;padding:0
+}
+.picker-arrow{font-size:.72rem;color:var(--sub)}
 .cal-nav-sub{font-size:.67rem;color:var(--sub);letter-spacing:.05em}
 .nav-group{display:flex;gap:.2rem}
 .nbtn{
@@ -118,6 +126,39 @@ canvas.clock-face{display:block}
 .mars .mini-cal td.selected{background:var(--sel-m)}
 .mini-cal td.today.selected{background:linear-gradient(135deg,var(--ea),var(--sel-e));color:#fff}
 .mars .mini-cal td.today.selected{background:linear-gradient(135deg,var(--ma),var(--sel-m));color:#fff}
+
+/* ── Picker popup ── */
+.cal-picker{
+  position:absolute;top:calc(100% + .45rem);left:0;z-index:100;
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--r);
+  padding:1rem;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.6);display:none
+}
+.cal-picker.open{display:block}
+.picker-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem}
+.picker-item{
+  padding:.45rem .2rem;border-radius:8px;text-align:center;cursor:pointer;font-size:.78rem;
+  border:1px solid transparent;transition:all .15s
+}
+.picker-item:hover{background:rgba(255,255,255,.1)}
+.picker-item.current{font-weight:700}
+.earth-panel .picker-item.current{border-color:var(--ea);color:var(--ea)}
+.mars-panel .picker-item.current{border-color:var(--ma);color:var(--ma)}
+.picker-year-nav{
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;
+  font-weight:700;font-size:.85rem;gap:.35rem
+}
+.picker-year-btn{
+  appearance:none;background:transparent;border:none;color:inherit;cursor:pointer;
+  font-weight:700;font-size:.85rem
+}
+
+/* ── Leyenda dariana ── */
+.darian-legend{
+  width:100%;border:1px solid var(--border);border-radius:10px;
+  background:rgba(255,255,255,.03);padding:.45rem .6rem;font-size:.68rem;color:var(--sub)
+}
+.darian-legend summary{cursor:pointer;color:var(--text);font-size:.7rem;font-weight:600}
+.darian-legend p{margin-top:.3rem;line-height:1.5}
 
 /* ── Selected info ── */
 .sel-info{
@@ -178,8 +219,11 @@ footer{font-size:.68rem;color:var(--sub);text-align:center;opacity:.55;max-width
         <button class="nbtn" id="e-mm-prev" onclick="earthNav('mm',-1)" title="Mes anterior">‹</button>
       </div>
       <div class="cal-nav-center">
-        <div class="cal-nav-title" id="earth-cal-title">Enero 2026</div>
+        <button class="cal-nav-title cal-nav-title-btn" id="earth-cal-title-btn" onclick="toggleEarthPicker()">
+          <span id="earth-cal-title">Enero 2026</span><span class="picker-arrow">▾</span>
+        </button>
         <div class="cal-nav-sub" id="earth-cal-sub"></div>
+        <div class="cal-picker earth-panel" id="earth-cal-picker"></div>
       </div>
       <div class="nav-group">
         <button class="nbtn" id="e-mm-next" onclick="earthNav('mm',1)" title="Mes siguiente">›</button>
@@ -208,6 +252,7 @@ footer{font-size:.68rem;color:var(--sub);text-align:center;opacity:.55;max-width
       <canvas class="clock-face" id="canvas-mars" width="190" height="190"></canvas>
       <div class="clock-digital" id="digital-mars">00:00:00</div>
     </div>
+    <div class="mars-sec-ref" id="mars-sec-ref"></div>
 
     <div class="date-block">
       <div class="day-num" id="mars-day">1</div>
@@ -221,8 +266,11 @@ footer{font-size:.68rem;color:var(--sub);text-align:center;opacity:.55;max-width
         <button class="nbtn" id="m-mm-prev" onclick="marsNav('mm',-1)" title="Mes anterior">‹</button>
       </div>
       <div class="cal-nav-center">
-        <div class="cal-nav-title" id="mars-cal-title">Éxodero MY 1</div>
+        <button class="cal-nav-title cal-nav-title-btn" id="mars-cal-title-btn" onclick="toggleMarsPicker()">
+          <span id="mars-cal-title">Éxodero · MY 1</span><span class="picker-arrow">▾</span>
+        </button>
         <div class="cal-nav-sub" id="mars-cal-sub"></div>
+        <div class="cal-picker mars-panel" id="mars-cal-picker"></div>
       </div>
       <div class="nav-group">
         <button class="nbtn" id="m-mm-next" onclick="marsNav('mm',1)" title="Mes siguiente">›</button>
@@ -232,11 +280,17 @@ footer{font-size:.68rem;color:var(--sub);text-align:center;opacity:.55;max-width
 
     <div class="mini-cal"><table id="cal-mars-table"></table></div>
     <div class="sel-info" id="mars-sel-info"></div>
+    <details class="darian-legend">
+      <summary>📚 Referencia dariana</summary>
+      <p>📅 Meses darianos: Éxodero · Fobrero · Deimzo · Olimpril · Vallayo · Hellasio · Elísio · Argosto · Amazombre · Arcadubre · Aurorembre · Etiembre</p>
+      <p>🗓 Días: Lúnares · Mártes · Hérmoles · Zeúves · Afrónes · Króbado · Helingo</p>
+    </details>
 
     <div class="info-row">
       <span>MSD: <strong id="mars-msd">—</strong></span>
       <span>Sol del año: <strong id="mars-soy">—</strong></span>
       <span>MY: <strong id="mars-my">—</strong></span>
+      <span>1 sol = 88 775.244 s♁ · 1 hora MTC = 3 699.8 s♁ · 1 min MTC = 61.66 s♁</span>
     </div>
   </div>
 
@@ -284,6 +338,17 @@ let eNavLive = true;          // true = siguiendo fecha real
 let mNavYear, mNavMonth;
 let mSelSol = null;
 let mNavLive = true;
+
+const earthPickerEl = document.getElementById('earth-cal-picker');
+const marsPickerEl  = document.getElementById('mars-cal-picker');
+const earthTitleBtn = document.getElementById('earth-cal-title-btn');
+const marsTitleBtn  = document.getElementById('mars-cal-title-btn');
+
+// Picker state
+let earthPickerMode = 'months';
+let earthPickerYear = null;
+let marsPickerMode = 'months';
+let marsPickerYear = null;
 
 /* ══════════════════════════════════════════════
    UTILIDADES GENERALES
@@ -610,6 +675,197 @@ function marsNav(unit, dir){
   }
 }
 
+function jumpEarthTo(year, month){
+  eNavYear = Math.max(1, Math.min(MAX_EARTH_YEAR, year));
+  eNavMonth = Math.max(1, Math.min(12, month));
+  eSelDay = null;
+  eNavLive = false;
+  updateEarthSelInfo(null);
+  renderEarth(new Date());
+
+  if(syncMode){
+    const s = earthToSilin(eNavYear, eNavMonth, 1);
+    mNavYear  = s.year;
+    mNavMonth = s.month;
+    mSelSol   = null;
+    mNavLive  = false;
+    renderMars(new Date());
+  }
+}
+
+function jumpMarsTo(year, month){
+  mNavYear = Math.max(1, Math.min(MAX_MARS_YEAR, year));
+  mNavMonth = Math.max(1, Math.min(12, month));
+  mSelSol = null;
+  mNavLive = false;
+  updateMarsSelInfo(null);
+  renderMars(new Date());
+
+  if(syncMode){
+    const earthDate = silinToEarth(mNavYear, mNavMonth, 1);
+    eNavYear  = earthDate.getUTCFullYear();
+    eNavMonth = earthDate.getUTCMonth()+1;
+    eSelDay   = null;
+    eNavLive  = false;
+    renderEarth(new Date());
+  }
+}
+
+function closeEarthPicker(){ earthPickerEl.classList.remove('open'); }
+function closeMarsPicker(){ marsPickerEl.classList.remove('open'); }
+
+function renderEarthPicker(){
+  const picker = earthPickerEl;
+  if(earthPickerMode === 'years'){
+    const start = earthPickerYear - 6;
+    let years = '';
+    for(let y=start; y<=start+12; y++){
+      if(y<1 || y>MAX_EARTH_YEAR) continue;
+      years += `<div class="picker-item ${y===eNavYear?'current':''}" onclick="selectEarthYear(${y})">${y}</div>`;
+    }
+    picker.innerHTML = `
+      <div class="picker-year-nav">
+        <button class="nbtn" onclick="shiftEarthPickerYears(-12,event)">‹</button>
+        <button class="picker-year-btn" onclick="setEarthPickerMode('months',event)">Años</button>
+        <button class="nbtn" onclick="shiftEarthPickerYears(12,event)">›</button>
+      </div>
+      <div class="picker-grid">${years}</div>
+    `;
+  } else {
+    let months = '';
+    for(let i=1;i<=12;i++){
+      months += `<div class="picker-item ${(earthPickerYear===eNavYear&&i===eNavMonth)?'current':''}" onclick="selectEarthMonth(${i})">${EARTH_MONTHS[i-1]}</div>`;
+    }
+    picker.innerHTML = `
+      <div class="picker-year-nav">
+        <button class="nbtn" onclick="shiftEarthPickerYear(-1,event)">‹</button>
+        <button class="picker-year-btn" onclick="setEarthPickerMode('years',event)">${earthPickerYear}</button>
+        <button class="nbtn" onclick="shiftEarthPickerYear(1,event)">›</button>
+      </div>
+      <div class="picker-grid">${months}</div>
+    `;
+  }
+}
+
+function renderMarsPicker(){
+  const picker = marsPickerEl;
+  if(marsPickerMode === 'years'){
+    const start = marsPickerYear - 6;
+    let years = '';
+    for(let y=start; y<=start+12; y++){
+      if(y<1 || y>MAX_MARS_YEAR) continue;
+      years += `<div class="picker-item ${y===mNavYear?'current':''}" onclick="selectMarsYear(${y})">MY ${y}</div>`;
+    }
+    picker.innerHTML = `
+      <div class="picker-year-nav">
+        <button class="nbtn" onclick="shiftMarsPickerYears(-12,event)">‹</button>
+        <button class="picker-year-btn" onclick="setMarsPickerMode('months',event)">Años marcianos</button>
+        <button class="nbtn" onclick="shiftMarsPickerYears(12,event)">›</button>
+      </div>
+      <div class="picker-grid">${years}</div>
+    `;
+  } else {
+    let months = '';
+    for(let i=1;i<=12;i++){
+      months += `<div class="picker-item ${(marsPickerYear===mNavYear&&i===mNavMonth)?'current':''}" onclick="selectMarsMonth(${i})">${MARS_MONTHS[i-1]}</div>`;
+    }
+    picker.innerHTML = `
+      <div class="picker-year-nav">
+        <button class="nbtn" onclick="shiftMarsPickerYear(-1,event)">‹</button>
+        <button class="picker-year-btn" onclick="setMarsPickerMode('years',event)">MY ${marsPickerYear}</button>
+        <button class="nbtn" onclick="shiftMarsPickerYear(1,event)">›</button>
+      </div>
+      <div class="picker-grid">${months}</div>
+    `;
+  }
+}
+
+function toggleEarthPicker(){
+  const open = earthPickerEl.classList.toggle('open');
+  closeMarsPicker();
+  if(open){
+    earthPickerMode = 'months';
+    earthPickerYear = eNavYear;
+    renderEarthPicker();
+  }
+}
+
+function toggleMarsPicker(){
+  const open = marsPickerEl.classList.toggle('open');
+  closeEarthPicker();
+  if(open){
+    marsPickerMode = 'months';
+    marsPickerYear = mNavYear;
+    renderMarsPicker();
+  }
+}
+
+function setEarthPickerMode(mode, event){
+  if(event) event.stopPropagation();
+  earthPickerMode = mode;
+  renderEarthPicker();
+}
+function shiftEarthPickerYear(dir, event){
+  if(event) event.stopPropagation();
+  earthPickerYear = Math.max(1, Math.min(MAX_EARTH_YEAR, earthPickerYear + dir));
+  renderEarthPicker();
+}
+function shiftEarthPickerYears(dir, event){
+  if(event) event.stopPropagation();
+  earthPickerYear = Math.max(1, Math.min(MAX_EARTH_YEAR, earthPickerYear + dir));
+  renderEarthPicker();
+}
+function selectEarthMonth(month){
+  jumpEarthTo(earthPickerYear, month);
+  closeEarthPicker();
+}
+function selectEarthYear(year){
+  jumpEarthTo(year, eNavMonth);
+  closeEarthPicker();
+}
+
+function setMarsPickerMode(mode, event){
+  if(event) event.stopPropagation();
+  marsPickerMode = mode;
+  renderMarsPicker();
+}
+function shiftMarsPickerYear(dir, event){
+  if(event) event.stopPropagation();
+  marsPickerYear = Math.max(1, Math.min(MAX_MARS_YEAR, marsPickerYear + dir));
+  renderMarsPicker();
+}
+function shiftMarsPickerYears(dir, event){
+  if(event) event.stopPropagation();
+  marsPickerYear = Math.max(1, Math.min(MAX_MARS_YEAR, marsPickerYear + dir));
+  renderMarsPicker();
+}
+function selectMarsMonth(month){
+  jumpMarsTo(marsPickerYear, month);
+  closeMarsPicker();
+}
+function selectMarsYear(year){
+  jumpMarsTo(year, mNavMonth);
+  closeMarsPicker();
+}
+
+document.addEventListener('click', (event)=>{
+  if(earthPickerEl.classList.contains('open') &&
+     !earthPickerEl.contains(event.target) &&
+     !earthTitleBtn.contains(event.target)) closeEarthPicker();
+
+  if(marsPickerEl.classList.contains('open') &&
+     !marsPickerEl.contains(event.target) &&
+     !marsTitleBtn.contains(event.target)) closeMarsPicker();
+});
+
+function renderMarsSecondReference(){
+  const ratio = MARS_SOL_RATIO;
+  const pct = (ratio - 1) * 100;
+  const ref = document.getElementById('mars-sec-ref');
+  ref.textContent = `⏱ 1 seg♂ = ${ratio.toFixed(5)} seg♁ (+${pct.toFixed(3)}%)`;
+  ref.title = `1 segundo marciano (MTC) = ${ratio.toFixed(8)} segundos terrestres (+${pct.toFixed(3)}%)`;
+}
+
 /* ══════════════════════════════════════════════
    CLICK EN DÍA
 ══════════════════════════════════════════════ */
@@ -793,6 +1049,7 @@ function tick(){
   eNavYear=now.getUTCFullYear(); eNavMonth=now.getUTCMonth()+1;
   const silin=silinFromTotalSols(solsFromEpoch(now));
   mNavYear=silin.year; mNavMonth=silin.month;
+  renderMarsSecondReference();
   tick();
   setInterval(tick,1000);
 })();
