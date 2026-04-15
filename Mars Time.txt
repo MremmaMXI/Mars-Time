@@ -252,7 +252,7 @@ footer{font-size:.68rem;color:var(--sub);text-align:center;opacity:.55;max-width
       <canvas class="clock-face" id="canvas-mars" width="190" height="190"></canvas>
       <div class="clock-digital" id="digital-mars">00:00:00</div>
     </div>
-    <div class="mars-sec-ref" title="1 segundo marciano (MTC) = 1.02749125 segundos terrestres (+2.749%)">⏱ 1 seg♂ = 1.02749 seg♁ (+2.749%)</div>
+    <div class="mars-sec-ref" id="mars-sec-ref"></div>
 
     <div class="date-block">
       <div class="day-num" id="mars-day">1</div>
@@ -338,6 +338,11 @@ let eNavLive = true;          // true = siguiendo fecha real
 let mNavYear, mNavMonth;
 let mSelSol = null;
 let mNavLive = true;
+
+const earthPickerEl = document.getElementById('earth-cal-picker');
+const marsPickerEl  = document.getElementById('mars-cal-picker');
+const earthTitleBtn = document.getElementById('earth-cal-title-btn');
+const marsTitleBtn  = document.getElementById('mars-cal-title-btn');
 
 // Picker state
 let earthPickerMode = 'months';
@@ -706,11 +711,11 @@ function jumpMarsTo(year, month){
   }
 }
 
-function closeEarthPicker(){ document.getElementById('earth-cal-picker').classList.remove('open'); }
-function closeMarsPicker(){ document.getElementById('mars-cal-picker').classList.remove('open'); }
+function closeEarthPicker(){ earthPickerEl.classList.remove('open'); }
+function closeMarsPicker(){ marsPickerEl.classList.remove('open'); }
 
 function renderEarthPicker(){
-  const picker = document.getElementById('earth-cal-picker');
+  const picker = earthPickerEl;
   if(earthPickerMode === 'years'){
     const start = earthPickerYear - 6;
     let years = '';
@@ -743,7 +748,7 @@ function renderEarthPicker(){
 }
 
 function renderMarsPicker(){
-  const picker = document.getElementById('mars-cal-picker');
+  const picker = marsPickerEl;
   if(marsPickerMode === 'years'){
     const start = marsPickerYear - 6;
     let years = '';
@@ -776,8 +781,7 @@ function renderMarsPicker(){
 }
 
 function toggleEarthPicker(){
-  const picker = document.getElementById('earth-cal-picker');
-  const open = picker.classList.toggle('open');
+  const open = earthPickerEl.classList.toggle('open');
   closeMarsPicker();
   if(open){
     earthPickerMode = 'months';
@@ -787,8 +791,7 @@ function toggleEarthPicker(){
 }
 
 function toggleMarsPicker(){
-  const picker = document.getElementById('mars-cal-picker');
-  const open = picker.classList.toggle('open');
+  const open = marsPickerEl.classList.toggle('open');
   closeEarthPicker();
   if(open){
     marsPickerMode = 'months';
@@ -846,18 +849,22 @@ function selectMarsYear(year){
 }
 
 document.addEventListener('click', (event)=>{
-  const earthPicker = document.getElementById('earth-cal-picker');
-  const earthBtn = document.getElementById('earth-cal-title-btn');
-  if(earthPicker.classList.contains('open') &&
-     !earthPicker.contains(event.target) &&
-     !earthBtn.contains(event.target)) closeEarthPicker();
+  if(earthPickerEl.classList.contains('open') &&
+     !earthPickerEl.contains(event.target) &&
+     !earthTitleBtn.contains(event.target)) closeEarthPicker();
 
-  const marsPicker = document.getElementById('mars-cal-picker');
-  const marsBtn = document.getElementById('mars-cal-title-btn');
-  if(marsPicker.classList.contains('open') &&
-     !marsPicker.contains(event.target) &&
-     !marsBtn.contains(event.target)) closeMarsPicker();
+  if(marsPickerEl.classList.contains('open') &&
+     !marsPickerEl.contains(event.target) &&
+     !marsTitleBtn.contains(event.target)) closeMarsPicker();
 });
+
+function renderMarsSecondReference(){
+  const ratio = MARS_SOL_RATIO;
+  const pct = (ratio - 1) * 100;
+  const ref = document.getElementById('mars-sec-ref');
+  ref.textContent = `⏱ 1 seg♂ = ${ratio.toFixed(5)} seg♁ (+${pct.toFixed(3)}%)`;
+  ref.title = `1 segundo marciano (MTC) = ${ratio.toFixed(8)} segundos terrestres (+${pct.toFixed(3)}%)`;
+}
 
 /* ══════════════════════════════════════════════
    CLICK EN DÍA
@@ -1042,6 +1049,7 @@ function tick(){
   eNavYear=now.getUTCFullYear(); eNavMonth=now.getUTCMonth()+1;
   const silin=silinFromTotalSols(solsFromEpoch(now));
   mNavYear=silin.year; mNavMonth=silin.month;
+  renderMarsSecondReference();
   tick();
   setInterval(tick,1000);
 })();
