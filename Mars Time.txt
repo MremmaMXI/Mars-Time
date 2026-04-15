@@ -102,6 +102,15 @@ canvas.clock-face{display:block}
 .picker-arrow{font-size:.72rem;color:var(--sub)}
 .cal-nav-sub{font-size:.67rem;color:var(--sub);letter-spacing:.05em}
 .nav-group{display:flex;gap:.2rem}
+.cal-mode-switch{
+  display:flex;border:1px solid var(--border);border-radius:20px;overflow:hidden;
+  width:100%;max-width:200px
+}
+.mode-btn{
+  flex:1;padding:.3rem .6rem;border:none;background:transparent;color:var(--sub);
+  font-size:.72rem;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.04em
+}
+.mode-btn.active{background:var(--ma);color:#000}
 .nbtn{
   width:28px;height:28px;border-radius:8px;border:1px solid var(--border);
   background:rgba(255,255,255,.04);color:var(--sub);font-size:.8rem;cursor:pointer;
@@ -260,37 +269,63 @@ footer{font-size:.68rem;color:var(--sub);text-align:center;opacity:.55;max-width
       <div class="weekday" id="mars-weekday">Lúnares</div>
     </div>
 
-    <div class="cal-nav">
-      <div class="nav-group">
-        <button class="nbtn" id="m-yy-prev" onclick="marsNav('yy',-1)" title="MY anterior">«</button>
-        <button class="nbtn" id="m-mm-prev" onclick="marsNav('mm',-1)" title="Mes anterior">‹</button>
-      </div>
-      <div class="cal-nav-center">
-        <button class="cal-nav-title cal-nav-title-btn" id="mars-cal-title-btn" onclick="toggleMarsPicker()">
-          <span id="mars-cal-title">Éxodero · MY 1</span><span class="picker-arrow">▾</span>
-        </button>
-        <div class="cal-nav-sub" id="mars-cal-sub"></div>
-        <div class="cal-picker mars-panel" id="mars-cal-picker"></div>
-      </div>
-      <div class="nav-group">
-        <button class="nbtn" id="m-mm-next" onclick="marsNav('mm',1)" title="Mes siguiente">›</button>
-        <button class="nbtn" id="m-yy-next" onclick="marsNav('yy',1)" title="MY siguiente">»</button>
-      </div>
+    <div class="cal-mode-switch">
+      <button class="mode-btn active" id="btn-silin" onclick="setMarsMode('silin')">Silin</button>
+      <button class="mode-btn" id="btn-darian" onclick="setMarsMode('darian')">Dariano</button>
     </div>
 
-    <div class="mini-cal"><table id="cal-mars-table"></table></div>
-    <div class="sel-info" id="mars-sel-info"></div>
-    <details class="darian-legend">
-      <summary>📚 Referencia dariana</summary>
-      <p>📅 Meses darianos: Éxodero · Fobrero · Deimzo · Olimpril · Vallayo · Hellasio · Elísio · Argosto · Amazombre · Arcadubre · Aurorembre · Etiembre</p>
-      <p>🗓 Días: Lúnares · Mártes · Hérmoles · Zeúves · Afrónes · Króbado · Helingo</p>
-    </details>
+    <div id="mars-silin-section">
+      <div class="cal-nav">
+        <div class="nav-group">
+          <button class="nbtn" id="m-yy-prev" onclick="marsNav('yy',-1)" title="MY anterior">«</button>
+          <button class="nbtn" id="m-mm-prev" onclick="marsNav('mm',-1)" title="Mes anterior">‹</button>
+        </div>
+        <div class="cal-nav-center">
+          <button class="cal-nav-title cal-nav-title-btn" id="mars-cal-title-btn" onclick="toggleMarsPicker()">
+            <span id="mars-cal-title">Éxodero · MY 1</span><span class="picker-arrow">▾</span>
+          </button>
+          <div class="cal-nav-sub" id="mars-cal-sub"></div>
+          <div class="cal-picker mars-panel" id="mars-cal-picker"></div>
+        </div>
+        <div class="nav-group">
+          <button class="nbtn" id="m-mm-next" onclick="marsNav('mm',1)" title="Mes siguiente">›</button>
+          <button class="nbtn" id="m-yy-next" onclick="marsNav('yy',1)" title="MY siguiente">»</button>
+        </div>
+      </div>
 
-    <div class="info-row">
+      <div class="mini-cal"><table id="cal-mars-table"></table></div>
+      <div class="sel-info" id="mars-sel-info"></div>
+      <details class="darian-legend">
+        <summary>📚 Referencia dariana</summary>
+        <p>📅 Meses darianos: Éxodero · Fobrero · Deimzo · Olimpril · Vallayo · Hellasio · Elísio · Argosto · Amazombre · Arcadubre · Aurorembre · Etiembre</p>
+        <p>🗓 Días: Lúnares · Mártes · Hérmoles · Zeúves · Afrónes · Króbado · Helingo</p>
+      </details>
+    </div>
+
+    <div id="mars-darian-section" style="display:none">
+      <div class="cal-nav">
+        <div class="nav-group">
+          <button class="nbtn" id="d-yy-prev" onclick="darianNav('yy',-1)" title="Año Dariano anterior">«</button>
+          <button class="nbtn" id="d-mm-prev" onclick="darianNav('mm',-1)" title="Mes anterior">‹</button>
+        </div>
+        <div class="cal-nav-center">
+          <div class="cal-nav-title" id="darian-cal-title">Sagittarius · Año Dariano 1</div>
+          <div class="cal-nav-sub" id="darian-cal-sub"></div>
+        </div>
+        <div class="nav-group">
+          <button class="nbtn" id="d-mm-next" onclick="darianNav('mm',1)" title="Mes siguiente">›</button>
+          <button class="nbtn" id="d-yy-next" onclick="darianNav('yy',1)" title="Año Dariano siguiente">»</button>
+        </div>
+      </div>
+      <div class="mini-cal"><table id="cal-darian-table"></table></div>
+      <div class="sel-info" id="mars-darian-sel-info"></div>
+    </div>
+
+    <div class="info-row" id="mars-info-row">
       <span>MSD: <strong id="mars-msd">—</strong></span>
-      <span>Sol del año: <strong id="mars-soy">—</strong></span>
-      <span>MY: <strong id="mars-my">—</strong></span>
-      <span>1 sol = 88 775.244 s♁ · 1 hora MTC = 3 699.8 s♁ · 1 min MTC = 61.66 s♁</span>
+      <span id="mars-info-mid"><span id="mars-info-mid-label">Sol del año:</span> <strong id="mars-soy">—</strong></span>
+      <span id="mars-info-year"><span id="mars-info-year-label">MY:</span> <strong id="mars-my">—</strong></span>
+      <span id="mars-info-seconds">1 sol = 88 775.244 s♁ · 1 hora MTC = 3 699.8 s♁ · 1 min MTC = 61.66 s♁</span>
     </div>
   </div>
 
@@ -309,10 +344,12 @@ footer{font-size:.68rem;color:var(--sub);text-align:center;opacity:.55;max-width
 const MARS_SOL_RATIO  = 1.02749125;
 const MSD_EPOCH_JD    = 2405522.0028779;
 const MSD_DIVISOR     = 1.0274912517;
+const DARIAN_EPOCH_OFFSET = (2405522.0028779 - 2317746.5) / 1.0274912517;
 const SILIN_EPOCH_MS  = Date.UTC(1955, 3, 11, 0, 0, 0);
 const MARS_YEAR_SOLS  = 686.9713 / MARS_SOL_RATIO; // ≈ 668.5991
 const MAX_EARTH_YEAR  = 3000;
 const MAX_MARS_YEAR   = 556; // ~año 3000
+const MAX_DARIAN_YEAR = 556;
 
 // Nombres
 const MARS_DAYS_FULL  = ['Lúnares','Mártes','Hérmoles','Zeúves','Afrónes','Króbado','Helingo'];
@@ -323,6 +360,14 @@ const EARTH_MONTHS    = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                           'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const EARTH_DAYS_FULL = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const EARTH_DAYS_CAL  = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']; // sem empieza lunes
+const DARIAN_DAYS_FULL  = ['Solis','Lunae','Martis','Mercurii','Jovis','Veneris','Saturni'];
+const DARIAN_DAYS_SHORT = ['Sol','Lun','Mar','Mer','Jov','Ven','Sat'];
+const DARIAN_MONTHS = [
+  'Sagittarius','Dhanus','Capricornus','Makara','Aquarius','Kumbha',
+  'Pisces','Mina','Aries','Mesha','Taurus','Rishabha',
+  'Gemini','Mithuna','Cancer','Karka','Leo','Simha',
+  'Virgo','Kanya','Libra','Tula','Scorpius','Vrishika'
+];
 
 /* ══════════════════════════════════════════════
    ESTADO
@@ -338,6 +383,11 @@ let eNavLive = true;          // true = siguiendo fecha real
 let mNavYear, mNavMonth;
 let mSelSol = null;
 let mNavLive = true;
+let marsCalMode = 'silin'; // 'silin' | 'darian'
+
+let dNavYear, dNavMonth;
+let dSelSol = null;
+let dNavLive = true;
 
 const earthPickerEl = document.getElementById('earth-cal-picker');
 const marsPickerEl  = document.getElementById('mars-cal-picker');
@@ -434,6 +484,64 @@ function silinFromTotalSols(totalSolsFloat){
 // Total soles desde época para una fecha Silin exacta
 function totalSolsForSilin(marsYear, month, sol){
   return solsAtMonthStart(marsYear, month) + (sol - 1);
+}
+
+function isDarianLeap(year){
+  if(year % 1000 === 0) return true;
+  if(year % 100 === 0) return true;
+  if(year % 10 === 0) return false;
+  return (year % 2 === 0);
+}
+
+function darianYearLen(year){
+  return isDarianLeap(year) ? 669 : 668;
+}
+
+function darianMonthLen(year, month){
+  if(month === 24) return isDarianLeap(year) ? 28 : 27;
+  if(month % 6 === 0) return 27;
+  return 28;
+}
+
+function darianSolsAtYearStart(year){
+  const y = year - 1;
+  return 668 * y + Math.floor(y/2) - Math.floor(y/10) + Math.floor(y/100) + Math.floor(y/1000);
+}
+
+function darianSolsAtMonthStart(year, month){
+  let s = darianSolsAtYearStart(year);
+  for(let m=1;m<month;m++) s += darianMonthLen(year, m);
+  return s;
+}
+
+function darianFromMSD(msd){
+  const totalSols = Math.max(0, Math.floor(msd + DARIAN_EPOCH_OFFSET));
+  let year = Math.max(1, Math.floor(totalSols / 668.5991) + 1);
+  while(year > 1 && darianSolsAtYearStart(year) > totalSols) year--;
+  while(darianSolsAtYearStart(year + 1) <= totalSols) year++;
+
+  const solInYear = totalSols - darianSolsAtYearStart(year);
+  let month = 1, rem = solInYear;
+  for(let m=1;m<=24;m++){
+    const ml = darianMonthLen(year, m);
+    if(rem < ml){ month = m; break; }
+    rem -= ml;
+  }
+
+  const weekday = totalSols % 7;
+  return {year, month, sol:rem + 1, weekday, solOfYear:solInYear + 1};
+}
+
+function msdFromDarian(year, month, sol){
+  const totalSols = darianSolsAtMonthStart(year, month) + (sol - 1);
+  return totalSols - DARIAN_EPOCH_OFFSET;
+}
+
+function darianToEarth(year, month, sol){
+  const msd = msdFromDarian(year, month, sol);
+  const jd = msd * MSD_DIVISOR + MSD_EPOCH_JD;
+  const ms = (jd - 2440587.5) * 86400000;
+  return new Date(ms);
 }
 
 /* ══════════════════════════════════════════════
@@ -617,9 +725,109 @@ function buildMarsCal(navYear, navMonth, todayYear, todayMonth, todaySol, selSol
   document.getElementById('m-yy-next').disabled=(navYear>=MAX_MARS_YEAR);
 }
 
+function buildDarianCal(navYear, navMonth, todayYear, todayMonth, todaySol, selSol){
+  const monthLen = darianMonthLen(navYear, navMonth);
+  const startWeekday = darianSolsAtMonthStart(navYear, navMonth) % 7; // 0=Solis
+
+  let html='<thead><tr>';
+  DARIAN_DAYS_SHORT.forEach(d=>{ html+=`<th>${d}</th>`; });
+  html+='</tr></thead><tbody><tr>';
+
+  let col=0;
+  for(let i=0;i<startWeekday;i++){ html+='<td class="empty"></td>'; col++; }
+  for(let s=1;s<=monthLen;s++){
+    if(col>0&&col%7===0) html+='</tr><tr>';
+    const isToday = (navYear===todayYear && navMonth===todayMonth && s===todaySol);
+    const isSel   = (selSol===s);
+    let cls='';
+    if(isToday&&isSel) cls='today selected';
+    else if(isToday)   cls='today';
+    else if(isSel)     cls='selected';
+    html+=`<td class="${cls}" onclick="onDarianClick(${s})">${s}</td>`;
+    col++;
+  }
+  while(col%7!==0){ html+='<td class="empty"></td>'; col++; }
+  html+='</tr></tbody>';
+  document.getElementById('cal-darian-table').innerHTML=html;
+
+  document.getElementById('darian-cal-title').textContent=`${DARIAN_MONTHS[navMonth-1]} · Año Dariano ${navYear}`;
+  const weeks=Math.ceil((startWeekday+monthLen)/7);
+  document.getElementById('darian-cal-sub').textContent=`${monthLen} soles · ${weeks} semanas`;
+
+  document.getElementById('d-yy-prev').disabled=(navYear<=1);
+  document.getElementById('d-mm-prev').disabled=(navYear<=1&&navMonth<=1);
+  document.getElementById('d-mm-next').disabled=(navYear>=MAX_DARIAN_YEAR&&navMonth>=24);
+  document.getElementById('d-yy-next').disabled=(navYear>=MAX_DARIAN_YEAR);
+}
+
 /* ══════════════════════════════════════════════
    NAVEGAR TIERRA
 ══════════════════════════════════════════════ */
+function setMarsMode(mode){
+  marsCalMode = mode;
+  document.getElementById('btn-silin').classList.toggle('active', mode === 'silin');
+  document.getElementById('btn-darian').classList.toggle('active', mode === 'darian');
+  document.getElementById('mars-silin-section').style.display = mode === 'silin' ? '' : 'none';
+  document.getElementById('mars-darian-section').style.display = mode === 'darian' ? '' : 'none';
+  closeMarsPicker();
+
+  if(mode === 'darian' && dNavLive){
+    const darian = darianFromMSD(getMSD(new Date()));
+    dNavYear = darian.year;
+    dNavMonth = darian.month;
+  }
+  if(mode === 'silin' && mNavLive){
+    const silin = silinFromTotalSols(solsFromEpoch(new Date()));
+    mNavYear = silin.year;
+    mNavMonth = silin.month;
+  }
+  renderMars(new Date());
+}
+
+function syncMarsToEarthFromSilin(year, month, sol){
+  const ed = silinToEarth(year, month, sol);
+  eNavYear  = ed.getUTCFullYear();
+  eNavMonth = ed.getUTCMonth()+1;
+  eSelDay   = ed.getUTCDate();
+  eNavLive  = false;
+  return ed;
+}
+
+function syncMarsToEarthFromDarian(year, month, sol){
+  const ed = darianToEarth(year, month, sol);
+  eNavYear  = ed.getUTCFullYear();
+  eNavMonth = ed.getUTCMonth()+1;
+  eSelDay   = ed.getUTCDate();
+  eNavLive  = false;
+  return ed;
+}
+
+function syncEarthToMarsFromDate(dateUTC, earthDay){
+  if(marsCalMode === 'darian'){
+    const d = darianFromMSD(getMSD(dateUTC));
+    dNavYear = d.year;
+    dNavMonth = d.month;
+    dSelSol = earthDay ? d.sol : null;
+    dNavLive = false;
+    if(earthDay){
+      updateDarianSelInfo(`${DARIAN_DAYS_FULL[d.weekday]}, Sol ${d.sol} de ${DARIAN_MONTHS[d.month-1]}, Año Dariano ${d.year}`);
+    }else{
+      updateDarianSelInfo(null);
+    }
+  }else{
+    const s = earthToSilin(dateUTC.getUTCFullYear(), dateUTC.getUTCMonth()+1, dateUTC.getUTCDate());
+    mNavYear = s.year;
+    mNavMonth = s.month;
+    mSelSol = earthDay ? s.sol : null;
+    mNavLive = false;
+    if(earthDay){
+      updateMarsSelInfo(`${MARS_DAYS_FULL[s.weekday]}, Sol ${s.sol} de ${MARS_MONTHS[s.month-1]}, MY ${s.year}`);
+    }else{
+      updateMarsSelInfo(null);
+    }
+  }
+}
+
 function earthNav(unit, dir){
   if(unit==='mm'){
     eNavMonth += dir;
@@ -636,13 +844,7 @@ function earthNav(unit, dir){
   renderEarth(new Date());
 
   if(syncMode){
-    // Sincronizar: ir al día 1 del mes navegado en Tierra
-    const d = new Date(Date.UTC(eNavYear, eNavMonth-1, 1));
-    const s = earthToSilin(eNavYear, eNavMonth, 1);
-    mNavYear  = s.year;
-    mNavMonth = s.month;
-    mSelSol   = null;
-    mNavLive  = false;
+    syncEarthToMarsFromDate(new Date(Date.UTC(eNavYear, eNavMonth-1, 1)), false);
     renderMars(new Date());
   }
 }
@@ -666,11 +868,30 @@ function marsNav(unit, dir){
   renderMars(new Date());
 
   if(syncMode){
-    const earthDate = silinToEarth(mNavYear, mNavMonth, 1);
-    eNavYear  = earthDate.getUTCFullYear();
-    eNavMonth = earthDate.getUTCMonth()+1;
+    syncMarsToEarthFromSilin(mNavYear, mNavMonth, 1);
     eSelDay   = null;
-    eNavLive  = false;
+    renderEarth(new Date());
+  }
+}
+
+function darianNav(unit, dir){
+  if(unit==='mm'){
+    dNavMonth += dir;
+    if(dNavMonth>24){ dNavMonth=1; dNavYear++; }
+    if(dNavMonth<1){ dNavMonth=24; dNavYear--; }
+  } else {
+    dNavYear += dir;
+  }
+  dNavYear  = Math.max(1, Math.min(MAX_DARIAN_YEAR, dNavYear));
+  dNavMonth = Math.max(1, Math.min(24, dNavMonth));
+  dSelSol   = null;
+  dNavLive  = false;
+  updateDarianSelInfo(null);
+  renderMars(new Date());
+
+  if(syncMode){
+    syncMarsToEarthFromDarian(dNavYear, dNavMonth, 1);
+    eSelDay = null;
     renderEarth(new Date());
   }
 }
@@ -684,11 +905,7 @@ function jumpEarthTo(year, month){
   renderEarth(new Date());
 
   if(syncMode){
-    const s = earthToSilin(eNavYear, eNavMonth, 1);
-    mNavYear  = s.year;
-    mNavMonth = s.month;
-    mSelSol   = null;
-    mNavLive  = false;
+    syncEarthToMarsFromDate(new Date(Date.UTC(eNavYear, eNavMonth-1, 1)), false);
     renderMars(new Date());
   }
 }
@@ -702,11 +919,23 @@ function jumpMarsTo(year, month){
   renderMars(new Date());
 
   if(syncMode){
-    const earthDate = silinToEarth(mNavYear, mNavMonth, 1);
-    eNavYear  = earthDate.getUTCFullYear();
-    eNavMonth = earthDate.getUTCMonth()+1;
+    syncMarsToEarthFromSilin(mNavYear, mNavMonth, 1);
     eSelDay   = null;
-    eNavLive  = false;
+    renderEarth(new Date());
+  }
+}
+
+function jumpDarianTo(year, month){
+  dNavYear = Math.max(1, Math.min(MAX_DARIAN_YEAR, year));
+  dNavMonth = Math.max(1, Math.min(24, month));
+  dSelSol = null;
+  dNavLive = false;
+  updateDarianSelInfo(null);
+  renderMars(new Date());
+
+  if(syncMode){
+    syncMarsToEarthFromDarian(dNavYear, dNavMonth, 1);
+    eSelDay = null;
     renderEarth(new Date());
   }
 }
@@ -881,13 +1110,8 @@ function onEarthClick(d){
   updateEarthSelInfo(selDateStr);
 
   if(syncMode && eSelDay){
-    const s = earthToSilin(eNavYear, eNavMonth, eSelDay);
-    mNavYear  = s.year;
-    mNavMonth = s.month;
-    mSelSol   = s.sol;
-    mNavLive  = false;
+    syncEarthToMarsFromDate(new Date(Date.UTC(eNavYear, eNavMonth-1, eSelDay)), true);
     renderMars(now);
-    updateMarsSelInfo(`${MARS_DAYS_FULL[s.weekday]}, Sol ${s.sol} de ${MARS_MONTHS[s.month-1]}, MY ${s.year}`);
   }
 }
 
@@ -904,11 +1128,26 @@ function onMarsClick(sol){
   updateMarsSelInfo(selStr);
 
   if(syncMode && mSelSol){
-    const ed = silinToEarth(mNavYear, mNavMonth, mSelSol);
-    eNavYear  = ed.getUTCFullYear();
-    eNavMonth = ed.getUTCMonth()+1;
-    eSelDay   = ed.getUTCDate();
-    eNavLive  = false;
+    const ed = syncMarsToEarthFromSilin(mNavYear, mNavMonth, mSelSol);
+    renderEarth(now);
+    updateEarthSelInfo(`${EARTH_DAYS_FULL[ed.getUTCDay()]}, ${eSelDay} de ${EARTH_MONTHS[eNavMonth-1]} de ${eNavYear}`);
+  }
+}
+
+function onDarianClick(sol){
+  dSelSol = (dSelSol===sol) ? null : sol;
+  dNavLive = false;
+  const now = new Date();
+  renderMars(now);
+
+  const weekdayIdx = (darianSolsAtMonthStart(dNavYear,dNavMonth) + (dSelSol||1) - 1) % 7;
+  const selStr = dSelSol
+    ? `${DARIAN_DAYS_FULL[weekdayIdx]}, Sol ${dSelSol} de ${DARIAN_MONTHS[dNavMonth-1]}, Año Dariano ${dNavYear}`
+    : null;
+  updateDarianSelInfo(selStr);
+
+  if(syncMode && dSelSol){
+    const ed = syncMarsToEarthFromDarian(dNavYear, dNavMonth, dSelSol);
     renderEarth(now);
     updateEarthSelInfo(`${EARTH_DAYS_FULL[ed.getUTCDay()]}, ${eSelDay} de ${EARTH_MONTHS[eNavMonth-1]} de ${eNavYear}`);
   }
@@ -927,6 +1166,11 @@ function updateMarsSelInfo(txt){
   if(txt){ el.textContent='🔴 '+txt; el.classList.add('visible'); }
   else   { el.textContent='';        el.classList.remove('visible'); }
 }
+function updateDarianSelInfo(txt){
+  const el = document.getElementById('mars-darian-sel-info');
+  if(txt){ el.textContent='🔴 '+txt; el.classList.add('visible'); }
+  else   { el.textContent='';        el.classList.remove('visible'); }
+}
 
 /* ══════════════════════════════════════════════
    BOTONES HOY / AHORA
@@ -940,10 +1184,14 @@ function goEarthNow(){
 }
 function goMarsNow(){
   mNavLive=true; mSelSol=null;
+  dNavLive=true; dSelSol=null;
   const now=new Date();
   const s=silinFromTotalSols(solsFromEpoch(now));
   mNavYear=s.year; mNavMonth=s.month;
+  const d=darianFromMSD(getMSD(now));
+  dNavYear=d.year; dNavMonth=d.month;
   updateMarsSelInfo(null);
+  updateDarianSelInfo(null);
   renderMars(now);
 }
 
@@ -988,26 +1236,30 @@ function renderEarth(now){
 ══════════════════════════════════════════════ */
 function renderMars(now){
   const msd     = getMSD(now);
-  const mtcH    = getMTC(msd);
-  const {h,m,s} = mtcToHMS(mtcH);
-
   const totalSols = solsFromEpoch(now);
   const silin     = silinFromTotalSols(totalSols);
+  const darian    = darianFromMSD(msd);
 
-  // Panel principal = fecha marciana real ahora
-  document.getElementById('mars-day').textContent        = silin.sol;
-  document.getElementById('mars-month-year').textContent = `${MARS_MONTHS[silin.month-1]} MY ${silin.year}`;
-  document.getElementById('mars-weekday').textContent    = MARS_DAYS_FULL[silin.weekday];
+  const current = marsCalMode === 'darian'
+    ? {sol:darian.sol, monthName:DARIAN_MONTHS[darian.month-1], yearLabel:`Año Dariano ${darian.year}`, weekdayName:DARIAN_DAYS_FULL[darian.weekday]}
+    : {sol:silin.sol, monthName:MARS_MONTHS[silin.month-1], yearLabel:`MY ${silin.year}`, weekdayName:MARS_DAYS_FULL[silin.weekday]};
+
+  document.getElementById('mars-day').textContent        = current.sol;
+  document.getElementById('mars-month-year').textContent = `${current.monthName} ${current.yearLabel}`;
+  document.getElementById('mars-weekday').textContent    = current.weekdayName;
 
   document.getElementById('mars-msd').textContent = msd.toFixed(2);
-  document.getElementById('mars-soy').textContent = silin.solOfYear;
-  document.getElementById('mars-my').textContent  = silin.year;
+  document.getElementById('mars-soy').textContent = marsCalMode === 'darian' ? darian.solOfYear : silin.solOfYear;
+  document.getElementById('mars-my').textContent  = marsCalMode === 'darian' ? darian.year : silin.year;
+  document.getElementById('mars-info-mid-label').textContent = 'Sol del año:';
+  document.getElementById('mars-info-year-label').textContent = marsCalMode === 'darian' ? 'Año Dariano:' : 'MY:';
 
   // Botón Ahora
-  document.getElementById('mars-now-btn').classList.toggle('away', !mNavLive);
+  document.getElementById('mars-now-btn').classList.toggle('away', marsCalMode === 'darian' ? !dNavLive : !mNavLive);
 
-  // Calendario con mes de navegación
+  // Calendarios con mes de navegación
   buildMarsCal(mNavYear, mNavMonth, silin.year, silin.month, silin.sol, mSelSol);
+  buildDarianCal(dNavYear, dNavMonth, darian.year, darian.month, darian.sol, dSelSol);
 }
 
 /* ══════════════════════════════════════════════
@@ -1038,6 +1290,10 @@ function tick(){
     const silin=silinFromTotalSols(solsFromEpoch(now));
     mNavYear=silin.year; mNavMonth=silin.month;
   }
+  if(dNavLive){
+    const darian=darianFromMSD(msd);
+    dNavYear=darian.year; dNavMonth=darian.month;
+  }
   renderMars(now);
 }
 
@@ -1049,7 +1305,10 @@ function tick(){
   eNavYear=now.getUTCFullYear(); eNavMonth=now.getUTCMonth()+1;
   const silin=silinFromTotalSols(solsFromEpoch(now));
   mNavYear=silin.year; mNavMonth=silin.month;
+  const darian=darianFromMSD(getMSD(now));
+  dNavYear=darian.year; dNavMonth=darian.month;
   renderMarsSecondReference();
+  setMarsMode('silin');
   tick();
   setInterval(tick,1000);
 })();
