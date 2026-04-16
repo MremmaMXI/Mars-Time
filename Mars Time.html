@@ -4,6 +4,8 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Dashboard Tierra &amp; Marte</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -82,6 +84,15 @@ canvas.clock-face{display:block}
 .earth .clock-digital{color:#7bb8ff}
 .mars .clock-digital{color:#ffaa70}
 .darian .clock-digital{color:#c084fc}
+.earth-clock-row{
+  display:flex;align-items:center;justify-content:center;gap:1rem;width:100%;flex-wrap:wrap;z-index:1
+}
+#earth-globe{
+  width:190px;height:190px;border-radius:50%;overflow:hidden;position:relative
+}
+#earth-globe canvas{
+  display:block;width:190px !important;height:190px !important
+}
 
 /* ── Mars seconds reference ── */
 .mars-sec-ref{
@@ -246,9 +257,12 @@ footer{font-size:.68rem;color:var(--sub);text-align:center;opacity:.55;max-width
       <div class="badge"><span class="dot"></span>Tierra — UTC</div>
       <button class="now-btn" id="earth-now-btn" onclick="goEarthNow()">● Hoy</button>
     </div>
-    <div class="clock-wrap">
-      <canvas class="clock-face" id="canvas-earth" width="190" height="190"></canvas>
-      <div class="clock-digital" id="digital-earth">00:00:00</div>
+    <div class="earth-clock-row">
+      <div class="clock-wrap">
+        <canvas class="clock-face" id="canvas-earth" width="190" height="190"></canvas>
+        <div class="clock-digital" id="digital-earth">00:00:00</div>
+      </div>
+      <div id="earth-globe"></div>
     </div>
     <div class="date-block">
       <div class="day-num" id="earth-day">1</div>
@@ -452,6 +466,7 @@ let syncMode = false;
 let eNavYear, eNavMonth, eSelDay = null, eNavLive = true;
 let mNavYear, mNavMonth, mSelSol = null, mNavLive = true;
 let dNavYear, dNavMonth, dSelSol = null, dNavLive = true;
+let earth3D = null;
 
 /* ══════════════════════════════════════════════
    UTILIDADES GENERALES
@@ -635,6 +650,84 @@ function drawClock(id, h, m, s, p){
   hand(s/60*Math.PI*2-Math.PI/2, 75, 1.5, p.sH);
   ctx.beginPath(); ctx.arc(cx,cy,5,0,Math.PI*2); ctx.fillStyle=p.ctr; ctx.fill();
   ctx.beginPath(); ctx.arc(cx,cy,2.5,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+}
+
+/* ══════════════════════════════════════════════
+   EARTH 3D GLOBE
+══════════════════════════════════════════════ */
+function initEarthGlobe(){
+  const host = document.getElementById('earth-globe');
+  if(!host) return;
+  if(!(window.THREE && THREE.OrbitControls)) return;
+  try{
+    const scene = new THREE.Scene();
+    scene.background = null;
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+    camera.position.z = 2.5;
+
+    const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+    renderer.setSize(190, 190, false);
+    renderer.setClearColor(0x000000, 0);
+    renderer.domElement.style.background = 'transparent';
+    host.appendChild(renderer.domElement);
+
+    const ambient = new THREE.AmbientLight(0x111111);
+    scene.add(ambient);
+    const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    scene.add(sunLight);
+
+    const geo = new THREE.SphereGeometry(1, 48, 48);
+    const mat = new THREE.MeshPhongMaterial({ color:0x3d7fbf });
+    const earth = new THREE.Mesh(geo, mat);
+    earth.rotation.z = -23.44 * Math.PI / 180;
+    scene.add(earth);
+
+    const texLoader = new THREE.TextureLoader();
+    texLoader.load(
+      'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
+      (tx) => { mat.map = tx; mat.needsUpdate = true; },
+      undefined,
+      () => {}
+    );
+
+    const axisGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, -1.2, 0),
+      new THREE.Vector3(0,  1.2, 0)
+    ]);
+    const axisMat = new THREE.LineBasicMaterial({ color:0xffffff, transparent:true, opacity:0.6 });
+    earth.add(new THREE.Line(axisGeo, axisMat));
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enablePan = false;
+    controls.minDistance = 1.5;
+    controls.maxDistance = 5;
+
+    earth3D = { scene, camera, renderer, controls, earth, sunLight };
+  }catch(_e){
+    earth3D = null;
+  }
+}
+
+function utcDayOfYear(now){
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth();
+  const d = now.getUTCDate();
+  return Math.floor((Date.UTC(y, m, d) - Date.UTC(y, 0, 0)) / 86400000);
+}
+
+function updateEarthGlobe(now){
+  if(!earth3D) return;
+  const { earth, sunLight, controls, renderer, scene, camera } = earth3D;
+  const hoursUTC = now.getUTCHours() + now.getUTCMinutes()/60 + now.getUTCSeconds()/3600;
+  const rotGrados = (hoursUTC - 12) * 15 - 90;
+  earth.rotation.y = rotGrados * Math.PI / 180;
+
+  const dayOfYear = utcDayOfYear(now);
+  const decl = 23.44 * Math.sin((360/365) * (dayOfYear - 81) * Math.PI/180);
+  sunLight.position.set(0, Math.sin(decl*Math.PI/180), Math.cos(decl*Math.PI/180)).normalize();
+
+  controls.update();
+  renderer.render(scene, camera);
 }
 
 /* ══════════════════════════════════════════════
@@ -940,6 +1033,7 @@ function tick(){
   const eH=now.getUTCHours(), eMi=now.getUTCMinutes(), eSe=now.getUTCSeconds();
   document.getElementById('digital-earth').textContent = `${pad(eH)}:${pad(eMi)}:${pad(eSe)}`;
   drawClock('canvas-earth', eH, eMi, eSe, EP);
+  updateEarthGlobe(now);
   if(eNavLive){ eNavYear=now.getUTCFullYear(); eNavMonth=now.getUTCMonth()+1; }
   renderEarth(now);
 
@@ -1095,6 +1189,7 @@ document.addEventListener('click', function(e){
    INIT
 ══════════════════════════════════════════════ */
 (function init(){
+  initEarthGlobe();
   const now = new Date();
   eNavYear = now.getUTCFullYear(); eNavMonth = now.getUTCMonth()+1;
   const sil = silinFromTotalSols(solsFromEpoch(now));
